@@ -1,0 +1,39 @@
+
+
+
+// Creamos el servidor
+
+const express = require('express')
+const path = require('path')
+const app = express()
+const http = require('http').createServer(app) /* establece la comunicación entre el servidor y el cliente */
+const io = require('socket.io')(http)  /* importa socket.io y lo asocia con el servidor http */
+
+
+const port = 3000
+
+
+app.use(express.json())
+app.use(express.urlencoded({ extended: true }))
+app.use(express.static(path.join(__dirname,'/public'))) /* // Declaro donde van a estar los archivos estáticos */
+
+
+let messages = []
+
+/* // Configuración de socket.io */
+
+io.on('connection', (socket) => {
+    socket.emit('messageList', messages) /* // almacena la lista de mensajes que envía el cliente */
+    console.log('Nuevo cliente se ha conectado') 
+
+    socket.on('newMessage', (message) => {
+        messages.push(message) /* // agrega el nuevo mensaje al array de mensajes */
+        io.emit('newMessage',{
+            socketid: socket.id, message: message
+        })
+    })
+})
+
+app.listen(port, () => {
+    console.log(`El servidor corre http://localhost:${port}`)
+})
